@@ -35,7 +35,7 @@ export default async function VideosPage() {
       {videos.length === 0 ? (
         <section className="panel empty-panel">
           <span className="empty-panel__icon"><Icon name="film" /></span>
-          <span className="eyebrow">A fresh frame</span>
+          <span className="eyebrow">A fresh start</span>
           <h2>Your library is empty.</h2>
           <p>Choose an MP4, WebM, or MOV file and share your first piece of work. You’ll be able to follow its processing status here.</p>
           <Link className="button button--primary" href="/studio/videos/new">Upload your first video <Icon name="arrow-right" /></Link>

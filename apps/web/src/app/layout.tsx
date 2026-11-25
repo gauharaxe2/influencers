@@ -3,10 +3,10 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  applicationName: "Frame",
+  applicationName: "Influence",
   title: {
-    default: "Frame Pakistan — Your work, in your frame",
-    template: "%s · Frame",
+    default: "Influence Pakistan — Your work, amplified",
+    template: "%s · Influence",
   },
   description:
     "A focused home for independent video creators in Pakistan—and the people who watch them.",

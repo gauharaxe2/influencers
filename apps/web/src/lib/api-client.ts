@@ -30,7 +30,7 @@ export async function browserApi<T>(
     });
   } catch {
     throw new ApiError(
-      "Could not connect to Frame. Check your connection and try again.",
+      "Could not connect to Influence. Check your connection and try again.",
       0,
     );
   }
@@ -51,7 +51,7 @@ export async function browserApi<T>(
 
   const payload = parseJson(text);
   if (payload === null) {
-    throw new ApiError("Frame returned an invalid response. Please try again.", response.status);
+    throw new ApiError("Influence returned an invalid response. Please try again.", response.status);
   }
 
   return payload as T;

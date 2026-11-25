@@ -10,7 +10,7 @@ export function SiteHeader() {
         <nav className="site-header__nav" aria-label="Main navigation">
           <Link className="text-link" href="/login">Log in</Link>
           <Link className="button button--primary button--small" href="/signup">
-            Join Frame
+            Join Influence
             <Icon name="arrow-right" width="16" height="16" />
           </Link>
         </nav>

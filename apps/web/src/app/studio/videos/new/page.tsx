@@ -9,7 +9,7 @@ export default async function NewVideoPage() {
 
   return (
     <div className="studio-page">
-      <div className="page-heading"><div><span className="eyebrow">New video</span><h1>Upload your next frame.</h1><p>Add the details, choose your file, and let Frame handle the handoff to processing.</p></div></div>
+      <div className="page-heading"><div><span className="eyebrow">New video</span><h1>Upload your next video.</h1><p>Add the details, choose your file, and let Influence handle the handoff to processing.</p></div></div>
       {user.role !== "CREATOR" ? (
         <section className="panel empty-panel">
           <span className="empty-panel__icon"><Icon name={user.role === "VIEWER" ? "upload" : "shield"} /></span>

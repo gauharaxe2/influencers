@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/forms/login-form";
 
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Log in to your Frame account and creator studio.",
+  description: "Log in to your Influence account and creator studio.",
 };
 
 export default function LoginPage() {

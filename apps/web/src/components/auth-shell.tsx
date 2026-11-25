@@ -41,8 +41,8 @@ export function AuthShell({
       </div>
 
       <footer className="auth-footer container">
-        <span>© {new Date().getFullYear()} Frame</span>
-        <span>Independent video, thoughtfully framed.</span>
+        <span>© {new Date().getFullYear()} Influence</span>
+        <span>Independent video, thoughtfully shared.</span>
       </footer>
     </main>
   );
