@@ -70,13 +70,13 @@ Generate the two JWT secrets locally with `openssl rand -base64 48`.
 
 Create **two** projects from `https://github.com/gauharaxe2/influencers`. In each project, set **Root Directory** and enable **Include source files outside of the Root Directory** so the install can see the workspace root and `packages/contracts`.
 
-Node.js version: **22.x**. The repo requires Node `>=20.19`.
+Node.js version: **22.x**. Root, web, and API `package.json` files pin `engines.node` to `22.x` so Vercel does not select a newer major.
 
 ### Web
 
 - Root Directory: `apps/web`
 - Framework Preset: Next.js
-- Install Command: taken from `apps/web/vercel.json` (`cd ../.. && npm install`)
+- Install Command: taken from `apps/web/vercel.json` (`cd ../.. && npm install --include=dev`). Vercel sets `NODE_ENV=production`, which would otherwise skip TypeScript.
 - Build Command: taken from `apps/web/vercel.json` (builds `@creator-platform/contracts`, then the web app)
 - Output Directory: Next.js default (`.next`). Do not set a custom directory.
 
@@ -84,7 +84,7 @@ Node.js version: **22.x**. The repo requires Node `>=20.19`.
 
 - Root Directory: `apps/api`
 - Framework Preset: NestJS
-- Install Command: taken from `apps/api/vercel.json` (installs the workspace, then builds `@creator-platform/contracts`)
+- Install Command: taken from `apps/api/vercel.json` (`npm install --include=dev`, then builds `@creator-platform/contracts`)
 - Build Command: leave empty. Vercel bundles `apps/api/src/main.ts` with the NestJS runtime. Do not point it at `tsc` or `dist/`.
 - Output Directory: none
 

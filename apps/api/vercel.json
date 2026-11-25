@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nestjs",
-  "installCommand": "cd ../.. && npm install && npm run build --workspace @creator-platform/contracts"
+  "installCommand": "cd ../.. && npm install --include=dev && npm run build --workspace @creator-platform/contracts"
 }
