@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { AuthDto, LoginInput, RegisterInput } from '@creator-platform/contracts';
-import type { Prisma, User } from '@prisma/client';
+import type { Transaction } from 'firebase-admin/firestore';
 import { argon2id, hash, verify } from 'argon2';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { APP_CONFIG } from '../config/configuration';
@@ -9,9 +9,13 @@ import type { AppConfig } from '../config/configuration';
 import { CountryPolicyService } from '../common/country-policy.service';
 import { allocateCreatorHandle } from '../common/creator-handle';
 import { toUserDto } from '../common/dto-mappers';
-import { isUniqueViolation } from '../common/prisma-error';
+import { isUniqueViolation } from '../common/unique-violation';
 import { sha256 } from '../common/token-hash';
-import { PrismaService } from '../prisma/prisma.service';
+import type { User } from '../domain/types';
+import { FirestoreRepository } from '../firestore/firestore.repository';
+import { FirestoreService } from '../firestore/firestore.service';
+import { COLLECTIONS } from '../firestore/collections';
+import { sessionFromDoc, userFromDoc } from '../firestore/converters';
 import {
   JWT_AUDIENCE,
   JWT_ISSUER,
@@ -25,12 +29,11 @@ interface RefreshTokenPayload {
   type: 'refresh';
 }
 
-type DatabaseClient = PrismaService | Prisma.TransactionClient;
-
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly firestore: FirestoreService,
+    private readonly repository: FirestoreRepository,
     private readonly countryPolicies: CountryPolicyService,
     private readonly jwtService: JwtService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
@@ -42,28 +45,25 @@ export class AuthService {
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
-        return await this.prisma.$transaction(async (transaction) => {
-          const handle = input.accountType === 'CREATOR'
-            ? await allocateCreatorHandle(transaction, input.displayName)
-            : null;
+        return await this.firestore.runTransaction(async (transaction) => {
+          const handle =
+            input.accountType === 'CREATOR'
+              ? await allocateCreatorHandle(transaction, this.firestore.firestore, input.displayName)
+              : null;
 
-          const user = await transaction.user.create({
-            data: {
-              email: input.email,
-              passwordHash,
-              displayName: input.displayName,
-              countryCode: input.countryCode,
-              role: input.accountType,
-            },
+          const user = await this.repository.createUserInTransaction(transaction, {
+            email: input.email,
+            passwordHash,
+            displayName: input.displayName,
+            countryCode: input.countryCode,
+            role: input.accountType,
           });
 
           if (handle) {
-            await transaction.creatorProfile.create({
-              data: {
-                userId: user.id,
-                handle,
-                displayName: input.displayName,
-              },
+            await this.repository.createCreatorProfileInTransaction(transaction, {
+              userId: user.id,
+              handle,
+              displayName: input.displayName,
             });
           }
 
@@ -84,7 +84,7 @@ export class AuthService {
   }
 
   async login(input: LoginInput): Promise<AuthDto> {
-    const user = await this.prisma.user.findUnique({ where: { email: input.email } });
+    const user = await this.repository.findUserByEmail(input.email);
 
     if (!user) {
       await hash(randomBytes(32).toString('hex'), { type: argon2id });
@@ -97,7 +97,7 @@ export class AuthService {
       throw this.invalidCredentials();
     }
 
-    return this.issueAuth(user, this.prisma);
+    return this.firestore.runTransaction((transaction) => this.issueAuth(user, transaction));
   }
 
   async refresh(refreshToken: string): Promise<AuthDto> {
@@ -121,37 +121,46 @@ export class AuthService {
 
     const refreshTokenHash = sha256(refreshToken);
 
-    return this.prisma.$transaction(async (transaction) => {
-      const session = await transaction.session.findUnique({
-        where: { refreshTokenHash },
-        include: { user: true },
-      });
+    return this.firestore.runTransaction(async (transaction) => {
+      const db = this.firestore.firestore;
+      const tokenSnap = await transaction.get(db.collection(COLLECTIONS.sessionTokens).doc(refreshTokenHash));
+      if (!tokenSnap.exists) {
+        throw this.invalidRefresh();
+      }
+
+      const sessionId = tokenSnap.data()!.sessionId as string;
+      const sessionSnap = await transaction.get(db.collection(COLLECTIONS.sessions).doc(sessionId));
+      if (!sessionSnap.exists) {
+        throw this.invalidRefresh();
+      }
+
+      const session = sessionFromDoc(sessionSnap.id, sessionSnap.data()!);
+      const userSnap = await transaction.get(db.collection(COLLECTIONS.users).doc(session.userId));
+      if (!userSnap.exists) {
+        throw this.invalidRefresh();
+      }
+      const user = userFromDoc(userSnap.id, userSnap.data()!);
 
       if (
-        !session ||
         session.id !== payload.sid ||
         session.userId !== payload.sub ||
         session.revokedAt !== null ||
         session.expiresAt <= new Date() ||
-        session.user.status !== 'ACTIVE'
+        user.status !== 'ACTIVE'
       ) {
         throw this.invalidRefresh();
       }
 
-      const revoked = await transaction.session.updateMany({
-        where: {
-          id: session.id,
-          revokedAt: null,
-          expiresAt: { gt: new Date() },
-        },
-        data: { revokedAt: new Date() },
-      });
-
-      if (revoked.count !== 1) {
+      const revoked = await this.repository.revokeSessionInTransaction(
+        transaction,
+        session.id,
+        refreshTokenHash,
+      );
+      if (!revoked) {
         throw this.invalidRefresh();
       }
 
-      return this.issueAuth(session.user, transaction);
+      return this.issueAuth(user, transaction);
     });
   }
 
@@ -160,16 +169,10 @@ export class AuthService {
       return;
     }
 
-    await this.prisma.session.updateMany({
-      where: {
-        refreshTokenHash: sha256(refreshToken),
-        revokedAt: null,
-      },
-      data: { revokedAt: new Date() },
-    });
+    await this.repository.revokeSessionsByRefreshTokenHash(sha256(refreshToken));
   }
 
-  private async issueAuth(user: User, client: DatabaseClient): Promise<AuthDto> {
+  private async issueAuth(user: User, transaction: Transaction): Promise<AuthDto> {
     const sessionId = randomUUID();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000);
     const refreshToken = await this.jwtService.signAsync(
@@ -182,13 +185,11 @@ export class AuthService {
       },
     );
 
-    await client.session.create({
-      data: {
-        id: sessionId,
-        userId: user.id,
-        refreshTokenHash: sha256(refreshToken),
-        expiresAt,
-      },
+    await this.repository.createSessionInTransaction(transaction, {
+      id: sessionId,
+      userId: user.id,
+      refreshTokenHash: sha256(refreshToken),
+      expiresAt,
     });
 
     const accessToken = await this.jwtService.signAsync(

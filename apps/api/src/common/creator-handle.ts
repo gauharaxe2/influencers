@@ -1,17 +1,17 @@
-import type { Prisma } from '@prisma/client';
+import type { Transaction } from 'firebase-admin/firestore';
+import { COLLECTIONS } from '../firestore/collections';
 import { generateHandle } from './handle';
 
 export async function allocateCreatorHandle(
-  transaction: Prisma.TransactionClient,
+  transaction: Transaction,
+  db: FirebaseFirestore.Firestore,
   displayName: string,
 ): Promise<string> {
   const preferredHandle = generateHandle(displayName);
-  const existing = await transaction.creatorProfile.findUnique({
-    where: { handle: preferredHandle },
-    select: { handle: true },
-  });
+  const handleRef = db.collection(COLLECTIONS.creatorHandles).doc(preferredHandle);
+  const existing = await transaction.get(handleRef);
 
-  return existing
-    ? generateHandle(displayName, new Set([existing.handle]))
+  return existing.exists
+    ? generateHandle(displayName, new Set([preferredHandle]))
     : preferredHandle;
 }

@@ -1,20 +1,16 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import type { CountryPolicy } from '@prisma/client';
+import type { CountryPolicy } from '../domain/types';
+import { FirestoreRepository } from '../firestore/firestore.repository';
 import { resolveCountryPolicy } from './country-policy';
-import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class CountryPolicyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly repository: FirestoreRepository) {}
 
   async resolve(countryCode: string): Promise<CountryPolicy | null> {
     const normalizedCode = countryCode.trim().toUpperCase();
-    const countryPolicy = await this.prisma.countryPolicy.findUnique({
-      where: { id: normalizedCode },
-    });
-    const globalPolicy = await this.prisma.countryPolicy.findUnique({
-      where: { id: 'GLOBAL' },
-    });
+    const countryPolicy = await this.repository.findCountryPolicy(normalizedCode);
+    const globalPolicy = await this.repository.findCountryPolicy('GLOBAL');
 
     return resolveCountryPolicy(countryPolicy, globalPolicy);
   }

@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '../config/config.module';
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
-import { PrismaModule } from '../prisma/prisma.module';
 import { LocalStorageDriver } from './local-storage.driver';
 import { LocalUploadController } from './storage-upload.controller';
 import { S3StorageDriver } from './s3-storage.driver';
@@ -11,7 +10,7 @@ import { STORAGE_DRIVER } from './storage.types';
 
 @Global()
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule],
   controllers: [LocalUploadController],
   providers: [
     {

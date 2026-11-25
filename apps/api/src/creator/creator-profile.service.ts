@@ -1,26 +1,26 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatorProfileDto, UpdateCreatorProfileInput } from '@creator-platform/contracts';
-import { Prisma } from '@prisma/client';
-import type { User } from '@prisma/client';
+import type { User } from '../domain/types';
 import { allocateCreatorHandle } from '../common/creator-handle';
 import { toCreatorProfileDto } from '../common/dto-mappers';
-import { isUniqueViolation } from '../common/prisma-error';
-import { PrismaService } from '../prisma/prisma.service';
+import { isUniqueViolation } from '../common/unique-violation';
+import { FirestoreRepository } from '../firestore/firestore.repository';
+import { FirestoreService } from '../firestore/firestore.service';
 
 @Injectable()
 export class CreatorProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly firestore: FirestoreService,
+    private readonly repository: FirestoreRepository,
+  ) {}
 
   async createOrGet(user: User): Promise<CreatorProfileDto> {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
-        const profile = await this.prisma.$transaction(async (transaction) => {
-          await transaction.user.updateMany({
-            where: { id: user.id, role: 'VIEWER', status: 'ACTIVE' },
-            data: { role: 'CREATOR' },
-          });
+        const profile = await this.firestore.runTransaction(async (transaction) => {
+          await this.repository.updateUserRoleIfViewerInTransaction(transaction, user.id, 'CREATOR', 'ACTIVE');
 
-          const currentUser = await transaction.user.findUnique({ where: { id: user.id } });
+          const currentUser = await this.repository.getUserInTransaction(transaction, user.id);
           if (!currentUser || currentUser.status !== 'ACTIVE') {
             throw new ForbiddenException('Account is not active');
           }
@@ -28,20 +28,20 @@ export class CreatorProfileService {
             throw new ForbiddenException('You do not have access to this resource');
           }
 
-          const existing = await transaction.creatorProfile.findUnique({
-            where: { userId: user.id },
-          });
+          const existing = await this.repository.getCreatorProfileInTransaction(transaction, user.id);
           if (existing) {
             return existing;
           }
 
-          const handle = await allocateCreatorHandle(transaction, currentUser.displayName);
-          return transaction.creatorProfile.create({
-            data: {
-              userId: currentUser.id,
-              handle,
-              displayName: currentUser.displayName,
-            },
+          const handle = await allocateCreatorHandle(
+            transaction,
+            this.firestore.firestore,
+            currentUser.displayName,
+          );
+          return this.repository.createCreatorProfileInTransaction(transaction, {
+            userId: currentUser.id,
+            handle,
+            displayName: currentUser.displayName,
           });
         });
 
@@ -51,10 +51,13 @@ export class CreatorProfileService {
           continue;
         }
         if (isUniqueViolation(error, 'userId')) {
-          const profile = await this.prisma.creatorProfile.findUnique({ where: { userId: user.id } });
+          const profile = await this.repository.findCreatorProfileByUserId(user.id);
           if (profile) {
             return toCreatorProfileDto(profile);
           }
+        }
+        if (error instanceof ForbiddenException) {
+          throw error;
         }
         throw error;
       }
@@ -64,7 +67,7 @@ export class CreatorProfileService {
   }
 
   async get(userId: string): Promise<CreatorProfileDto> {
-    const profile = await this.prisma.creatorProfile.findUnique({ where: { userId } });
+    const profile = await this.repository.findCreatorProfileByUserId(userId);
     if (!profile) {
       throw new NotFoundException('Creator profile not found');
     }
@@ -73,20 +76,17 @@ export class CreatorProfileService {
 
   async update(userId: string, input: UpdateCreatorProfileInput): Promise<CreatorProfileDto> {
     try {
-      const profile = await this.prisma.creatorProfile.update({
-        where: { userId },
-        data: {
-          displayName: input.displayName,
-          handle: input.handle,
-          bio: input.bio,
-        },
+      const profile = await this.repository.updateCreatorProfile(userId, {
+        displayName: input.displayName,
+        handle: input.handle,
+        bio: input.bio,
       });
       return toCreatorProfileDto(profile);
     } catch (error) {
       if (isUniqueViolation(error, 'handle')) {
         throw new ConflictException('Creator handle is not available');
       }
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      if (error instanceof Error && error.message === 'NOT_FOUND') {
         throw new NotFoundException('Creator profile not found');
       }
       throw error;

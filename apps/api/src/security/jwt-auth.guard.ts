@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
-import { PrismaService } from '../prisma/prisma.service';
+import { FirestoreRepository } from '../firestore/firestore.repository';
 import { ACCESS_COOKIE_NAME, JWT_AUDIENCE, JWT_ISSUER } from './security.constants';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
@@ -18,7 +18,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
-    private readonly prisma: PrismaService,
+    private readonly repository: FirestoreRepository,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -48,7 +48,7 @@ export class JwtAuthGuard implements CanActivate {
         throw new Error('Invalid access token');
       }
 
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      const user = await this.repository.findUserById(payload.sub);
       if (!user || user.status !== 'ACTIVE') {
         throw new Error('Inactive user');
       }

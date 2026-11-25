@@ -7,14 +7,15 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import type { UploadSessionDto, VideoDto, VideoUploadInput } from '@creator-platform/contracts';
-import type { User } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
 import { CountryPolicyService } from '../common/country-policy.service';
 import { toVideoDto } from '../common/dto-mappers';
 import { sha256 } from '../common/token-hash';
-import { PrismaService } from '../prisma/prisma.service';
+import type { User } from '../domain/types';
+import { FirestoreRepository } from '../firestore/firestore.repository';
+import { FirestoreService } from '../firestore/firestore.service';
 import { UPLOAD_SESSION_TTL_MS } from '../security/security.constants';
 import { generateObjectKey } from '../storage/object-key';
 import { StorageObjectNotFoundError } from '../storage/storage-errors';
@@ -23,7 +24,8 @@ import { StorageService } from '../storage/storage.service';
 @Injectable()
 export class VideoService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly firestore: FirestoreService,
+    private readonly repository: FirestoreRepository,
     private readonly countryPolicies: CountryPolicyService,
     private readonly storage: StorageService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
@@ -45,25 +47,24 @@ export class VideoService {
       sizeBytes: input.sizeBytes,
     });
 
-    const video = await this.prisma.$transaction(async (transaction) =>
-      transaction.video.create({
-        data: {
+    const video = await this.firestore.runTransaction((transaction) =>
+      this.repository.createVideoWithUploadSessionInTransaction(
+        transaction,
+        {
           ownerId: user.id,
           title: input.title,
           description: input.description,
           visibility: input.visibility,
           fileName: input.fileName,
           mimeType: input.mimeType,
-          sizeBytes: BigInt(input.sizeBytes),
-          uploadSession: {
-            create: {
-              objectKey,
-              uploadTokenHash: sha256(token),
-              expiresAt,
-            },
-          },
+          sizeBytes: input.sizeBytes,
         },
-      }),
+        {
+          objectKey,
+          uploadTokenHash: sha256(token),
+          expiresAt,
+        },
+      ),
     );
 
     return {
@@ -76,21 +77,16 @@ export class VideoService {
   }
 
   async complete(user: User, videoId: string): Promise<VideoDto> {
-    const session = await this.prisma.uploadSession.findFirst({
-      where: {
-        videoId,
-        expiresAt: { gt: new Date() },
-        video: { is: { ownerId: user.id } },
-      },
-      include: { video: true },
-    });
+    const row = await this.repository.findUploadSessionByVideoId(videoId);
 
-    if (!session) {
+    if (!row || row.video.ownerId !== user.id) {
       throw new NotFoundException('Upload not found');
     }
 
-    const isAlreadyComplete = session.video.status === 'UPLOADED' && session.completedAt !== null;
-    if (!isAlreadyComplete && (session.video.status !== 'UPLOADING' || session.completedAt !== null)) {
+    const { session, video } = row;
+
+    const isAlreadyComplete = video.status === 'UPLOADED' && session.completedAt !== null;
+    if (!isAlreadyComplete && (video.status !== 'UPLOADING' || session.completedAt !== null)) {
       throw new ConflictException('Upload cannot be completed');
     }
 
@@ -104,59 +100,28 @@ export class VideoService {
       throw error;
     }
 
-    if (BigInt(storedSize) !== session.video.sizeBytes) {
+    if (storedSize !== video.sizeBytes) {
       throw new UnprocessableEntityException('Uploaded object size does not match the declared size');
     }
 
     if (isAlreadyComplete) {
-      return toVideoDto(session.video);
+      return toVideoDto(video);
     }
 
-    return this.prisma.$transaction(async (transaction) => {
-      const now = new Date();
-      const claimed = await transaction.uploadSession.updateMany({
-        where: {
-          id: session.id,
-          expiresAt: { gt: now },
-          completedAt: null,
-        },
-        data: { completedAt: now },
-      });
-
-      if (claimed.count !== 1) {
-        const current = await transaction.uploadSession.findUnique({
-          where: { id: session.id },
-          include: { video: true },
-        });
-        if (current?.completedAt && current.video.status === 'UPLOADED') {
-          return toVideoDto(current.video);
-        }
-        throw new ConflictException('Upload cannot be completed');
+    const result = await this.repository.completeUploadInTransaction(session.id, videoId, user.id);
+    if (result === 'conflict') {
+      const current = await this.repository.findUploadSessionByVideoId(videoId);
+      if (current?.session.completedAt && current.video.status === 'UPLOADED') {
+        return toVideoDto(current.video);
       }
+      throw new ConflictException('Upload cannot be completed');
+    }
 
-      const updated = await transaction.video.updateMany({
-        where: {
-          id: videoId,
-          ownerId: user.id,
-          status: 'UPLOADING',
-        },
-        data: { status: 'UPLOADED' },
-      });
-
-      if (updated.count !== 1) {
-        throw new ConflictException('Upload cannot be completed');
-      }
-
-      const video = await transaction.video.findUniqueOrThrow({ where: { id: videoId } });
-      return toVideoDto(video);
-    });
+    return toVideoDto(result);
   }
 
   async list(userId: string): Promise<{ videos: VideoDto[] }> {
-    const videos = await this.prisma.video.findMany({
-      where: { ownerId: userId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const videos = await this.repository.listVideosByOwner(userId);
     return { videos: videos.map(toVideoDto) };
   }
 }

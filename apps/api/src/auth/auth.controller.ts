@@ -11,7 +11,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { AuthDto, LoginInput, RegisterInput, UserDto } from '@creator-platform/contracts';
 import { loginSchema, registerSchema } from '@creator-platform/contracts';
-import type { User } from '@prisma/client';
+import type { User } from '../domain/types';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { APP_CONFIG } from '../config/configuration';

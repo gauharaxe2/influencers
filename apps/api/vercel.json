@@ -1,0 +1,5 @@
+{
+  "framework": "nestjs",
+  "installCommand": "cd ../.. && npm install",
+  "buildCommand": "cd ../.. && npm run build --workspace @creator-platform/contracts && npm run build --workspace @creator-platform/api"
+}

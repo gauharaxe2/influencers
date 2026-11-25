@@ -1,5 +1,5 @@
-import type { CreatorProfile, User, Video } from '@prisma/client';
 import type { CreatorProfileDto, UserDto, VideoDto } from '@creator-platform/contracts';
+import type { CreatorProfile, User, Video } from '../domain/types';
 
 export function toUserDto(user: User): UserDto {
   return {
@@ -26,7 +26,7 @@ export function toCreatorProfileDto(profile: CreatorProfile): CreatorProfileDto 
 }
 
 export function toVideoDto(video: Video): VideoDto {
-  const sizeBytes = Number(video.sizeBytes);
+  const sizeBytes = video.sizeBytes;
   if (!Number.isSafeInteger(sizeBytes)) {
     throw new Error('Video size exceeds the supported DTO range');
   }

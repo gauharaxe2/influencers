@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import type { CreatorProfileDto, UpdateCreatorProfileInput } from '@creator-platform/contracts';
 import { updateCreatorProfileSchema } from '@creator-platform/contracts';
-import type { User } from '@prisma/client';
+import type { User } from '../domain/types';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import { CurrentUser } from '../security/current-user.decorator';
 import { Roles } from '../security/roles.decorator';

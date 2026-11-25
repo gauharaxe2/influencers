@@ -10,8 +10,6 @@
     "dev": "npm run build --workspace @creator-platform/contracts && concurrently -k -n web,api -c blue,green \"npm run dev --workspace @creator-platform/web\" \"npm run dev --workspace @creator-platform/api\"",
     "build": "npm run build --workspace @creator-platform/contracts && npm run build --workspace @creator-platform/api && npm run build --workspace @creator-platform/web",
     "test": "npm run build --workspace @creator-platform/contracts && npm run test --workspace @creator-platform/api && npm run test --workspace @creator-platform/web",
-    "db:generate": "npm run db:generate --workspace @creator-platform/api",
-    "db:migrate": "npm run db:migrate --workspace @creator-platform/api",
     "db:seed": "npm run db:seed --workspace @creator-platform/api"
   },
   "devDependencies": {

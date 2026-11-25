@@ -9,7 +9,8 @@ const configSchema = z
   .object({
     nodeEnv: z.enum(['development', 'test', 'production']).default('development'),
     port: z.coerce.number().int().min(1).max(65535).default(4000),
-    databaseUrl: z.string().min(1, 'DATABASE_URL is required'),
+    firebaseProjectId: z.string().min(1).default('frame-influencers'),
+    firebaseServiceAccountJson: z.string().min(1).optional(),
     jwtAccessSecret: z.string().min(1).optional(),
     jwtRefreshSecret: z.string().min(1).optional(),
     storageDriver: z.enum(['local', 's3']).default('local'),
@@ -127,7 +128,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppCon
   const result = configSchema.safeParse({
     nodeEnv: environment.NODE_ENV,
     port: environment.PORT,
-    databaseUrl: environment.DATABASE_URL,
+    firebaseProjectId: environment.FIREBASE_PROJECT_ID,
+    firebaseServiceAccountJson: environment.FIREBASE_SERVICE_ACCOUNT_JSON,
     jwtAccessSecret: environment.JWT_ACCESS_SECRET,
     jwtRefreshSecret: environment.JWT_REFRESH_SECRET,
     storageDriver: environment.STORAGE_DRIVER,

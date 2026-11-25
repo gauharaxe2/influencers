@@ -3,6 +3,8 @@ node_modules/
 dist/
 .data/
 .tmp/
+.secrets/
+apps/api/.secrets/
 .vercel
 .env*
 !.env.example
@@ -10,3 +12,6 @@ dist/
 *.log
 .DS_Store
 coverage/
+
+.secrets/
+apps/api/.secrets/

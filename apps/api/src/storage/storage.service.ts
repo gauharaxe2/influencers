@@ -10,7 +10,7 @@ import {
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
 import { sha256 } from '../common/token-hash';
-import { PrismaService } from '../prisma/prisma.service';
+import { FirestoreRepository } from '../firestore/firestore.repository';
 import { isUploadToken } from './object-key';
 import { StorageObjectExistsError } from './storage-errors';
 import { STORAGE_DRIVER, StorageDriver } from './storage.types';
@@ -20,7 +20,7 @@ import type { UploadUrlRequest, UploadUrlResult, StorageObjectSize } from './sto
 export class StorageService {
   constructor(
     @Inject(STORAGE_DRIVER) private readonly driver: StorageDriver,
-    private readonly prisma: PrismaService,
+    private readonly repository: FirestoreRepository,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -57,25 +57,22 @@ export class StorageService {
       throw new BadRequestException('Invalid upload content length');
     }
 
-    const session = await this.prisma.uploadSession.findUnique({
-      where: { uploadTokenHash: sha256(token) },
-      include: { video: true },
-    });
+    const row = await this.repository.findUploadSessionByUploadTokenHash(sha256(token));
 
     if (
-      !session ||
-      session.completedAt !== null ||
-      session.expiresAt <= new Date() ||
-      session.video.status !== 'UPLOADING'
+      !row ||
+      row.session.completedAt !== null ||
+      row.session.expiresAt <= new Date() ||
+      row.video.status !== 'UPLOADING'
     ) {
       throw new NotFoundException('Upload session not found');
     }
-    if (BigInt(contentLength) !== session.video.sizeBytes) {
+    if (contentLength !== row.video.sizeBytes) {
       throw new BadRequestException('Upload size does not match the declared size');
     }
 
     try {
-      await this.driver.putObject(session.objectKey, body);
+      await this.driver.putObject(row.session.objectKey, body);
     } catch (error) {
       if (error instanceof StorageObjectExistsError) {
         throw new ConflictException('Upload has already been received');
@@ -83,9 +80,9 @@ export class StorageService {
       throw error;
     }
 
-    const stored = await this.statObject(session.objectKey);
-    if (BigInt(stored.sizeBytes) !== session.video.sizeBytes) {
-      await this.deleteObject(session.objectKey).catch(() => undefined);
+    const stored = await this.statObject(row.session.objectKey);
+    if (stored.sizeBytes !== row.video.sizeBytes) {
+      await this.deleteObject(row.session.objectKey).catch(() => undefined);
       throw new UnprocessableEntityException('Stored upload size does not match the declared size');
     }
   }
