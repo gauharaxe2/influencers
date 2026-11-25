@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "./brand";
 import { Icon } from "./icons";
+import { PoweredBy } from "./powered-by";
 
 export function AuthShell({
   title,
@@ -43,6 +44,7 @@ export function AuthShell({
       <footer className="auth-footer container">
         <span>© {new Date().getFullYear()} Influence</span>
         <span>Independent video, thoughtfully shared.</span>
+        <PoweredBy />
       </footer>
     </main>
   );

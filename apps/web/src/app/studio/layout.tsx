@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import type { UserDto } from "@creator-platform/contracts";
 import { Brand } from "@/components/brand";
+import { PoweredBy } from "@/components/powered-by";
 import { SignOutButton } from "@/components/studio/sign-out-button";
 import { StudioNav } from "@/components/studio/studio-nav";
 import { getInitials } from "@/lib/format";
@@ -29,6 +30,7 @@ function StudioFrame({ user, children }: { user: UserDto; children: ReactNode })
           <span className="avatar">{getInitials(user.displayName)}</span>
           <span className="sidebar-account__copy"><strong>{user.displayName}</strong><small>{user.email}</small></span>
         </div>
+        <PoweredBy className="powered-by--sidebar" />
       </aside>
 
       <div className="studio-main">

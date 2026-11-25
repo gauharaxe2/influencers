@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { PoweredBy } from "@/components/powered-by";
 import { Icon, type IconName } from "@/components/icons";
 
 const creatorFeatures: { icon: IconName; title: string; description: string; detail: string }[] = [
@@ -90,7 +91,17 @@ export default function LandingPage() {
           <div className="container final-cta"><div className="final-cta__mark" aria-hidden="true"><span /></div><span className="eyebrow">Your next chapter</span><h2>Give your work<br />a home of its own.</h2><p>Create an account in minutes. Start as a viewer or step into your creator studio from day one.</p><div className="hero__actions"><Link className="button button--primary button--large" href="/signup">Create your Influence account <Icon name="arrow-right" /></Link><Link className="button button--ghost button--large" href="/login">Log in</Link></div></div>
         </section>
       </main>
-      <footer className="site-footer"><div className="container site-footer__inner"><span>© {new Date().getFullYear()} Influence</span><p>Independent video, thoughtfully shared.</p><nav aria-label="Footer navigation"><Link href="/login">Log in</Link><Link href="/signup">Join Influence</Link></nav></div></footer>
+      <footer className="site-footer">
+        <div className="container site-footer__inner">
+          <span>© {new Date().getFullYear()} Influence</span>
+          <p>Independent video, thoughtfully shared.</p>
+          <PoweredBy />
+          <nav aria-label="Footer navigation">
+            <Link href="/login">Log in</Link>
+            <Link href="/signup">Join Influence</Link>
+          </nav>
+        </div>
+      </footer>
     </>
   );
 }
