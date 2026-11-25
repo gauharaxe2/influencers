@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "./brand";
 import { Icon } from "./icons";
+import { ThemeToggle } from "./theme-toggle";
 
 export function SiteHeader() {
   return (
@@ -8,6 +9,7 @@ export function SiteHeader() {
       <div className="container site-header__inner">
         <Brand />
         <nav className="site-header__nav" aria-label="Main navigation">
+          <ThemeToggle />
           <Link className="text-link" href="/login">Log in</Link>
           <Link className="button button--primary button--small" href="/signup">
             Join Influence

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { UserDto } from "@creator-platform/contracts";
 import { Brand } from "@/components/brand";
 import { PoweredBy } from "@/components/powered-by";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/studio/sign-out-button";
 import { StudioNav } from "@/components/studio/studio-nav";
 import { getInitials } from "@/lib/format";
@@ -38,6 +39,7 @@ function StudioFrame({ user, children }: { user: UserDto; children: ReactNode })
           <div className="studio-topbar__title"><span className="status-dot" /> Creator studio</div>
           <div className="studio-topbar__account">
             {user.status === "SUSPENDED" ? <span className="account-warning">Account suspended</span> : null}
+            <ThemeToggle />
             <span className="account-chip"><span className="avatar avatar--small">{getInitials(user.displayName)}</span><span><strong>{user.displayName}</strong><small>{user.role === "VIEWER" ? "Viewer" : user.role === "ADMIN" ? "Admin" : "Creator"}</small></span></span>
             <SignOutButton />
           </div>
