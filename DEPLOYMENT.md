@@ -1,6 +1,6 @@
 # Deployment
 
-Frame is an npm workspaces monorepo. The website is Next.js (`apps/web`). The API is NestJS (`apps/api`) and is the only process that talks to Firebase. Deploy them as two Vercel projects from this GitHub repository. Do not put service-account JSON, JWT secrets, or S3 keys in git.
+Influence is an npm workspaces monorepo. The website is Next.js (`apps/web`). The API is NestJS (`apps/api`) and is the only process that talks to Firebase. Deploy them as two Vercel projects from this GitHub repository. Do not put service-account JSON, JWT secrets, or S3 keys in git.
 
 Firebase project id referenced by this repo: `frame-influencers` (`.firebaserc`, and the API's local default).
 

@@ -41,7 +41,7 @@ export async function serverApi<T>(
       },
     );
   } catch {
-    throw new ServerApiError("The Frame API is currently unavailable.", 503);
+    throw new ServerApiError("The Influence API is currently unavailable.", 503);
   }
 
   const text = await response.text();
@@ -50,7 +50,7 @@ export async function serverApi<T>(
     throw new ServerApiError(
       getApiErrorMessage(
         parseJson(text),
-        `The Frame API request failed (${response.status}).`,
+        `The Influence API request failed (${response.status}).`,
       ),
       response.status,
     );
@@ -60,7 +60,7 @@ export async function serverApi<T>(
 
   const payload = parseJson(text);
   if (payload === null) {
-    throw new ServerApiError("The Frame API returned an invalid response.", 502);
+    throw new ServerApiError("The Influence API returned an invalid response.", 502);
   }
 
   return payload as T;

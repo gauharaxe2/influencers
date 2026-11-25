@@ -120,7 +120,7 @@ export function ProfileForm({ user, initialProfile }: { user: UserDto; initialPr
     <div className="profile-grid">
       <form className="panel profile-form" onSubmit={handleSubmit} noValidate>
         <div className="panel-heading">
-          <div><h2>Public profile</h2><p>These details identify your creator space on Frame.</p></div>
+          <div><h2>Public profile</h2><p>These details identify your creator space on Influence.</p></div>
         </div>
 
         {formError ? <div className="form-alert form-alert--error" role="alert">{formError}</div> : null}
@@ -154,7 +154,7 @@ export function ProfileForm({ user, initialProfile }: { user: UserDto; initialPr
           <div className="panel-heading"><div><span className="eyebrow">Payout status</span><h2>{payout.title}</h2></div></div>
           <PayoutBadge status={profile.payoutStatus} />
           <p>{payout.description}</p>
-          <div className="planned-note"><Icon name="wallet" /><p><strong>Planned revenue model</strong>Frame plans to allocate 30% to the platform and 70% to the creator. This is not a current payout guarantee.</p></div>
+          <div className="planned-note"><Icon name="wallet" /><p><strong>Planned revenue model</strong>Influence plans to allocate 30% to the platform and 70% to the creator. This is not a current payout guarantee.</p></div>
         </section>
 
         <section className="panel profile-details">

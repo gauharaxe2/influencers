@@ -177,7 +177,7 @@ export function UploadForm() {
     : phase === "uploading"
       ? "Uploading your file. Keep this tab open; no progress percentage is available."
       : phase === "completing"
-        ? "File uploaded. Asking Frame to complete the upload…"
+        ? "File uploaded. Asking Influence to complete the upload…"
         : "";
 
   return (
@@ -195,8 +195,8 @@ export function UploadForm() {
         <section className="panel upload-success" aria-labelledby="upload-success-title">
           <span className="upload-success__icon"><Icon name="check" /></span>
           <span className="eyebrow">Upload complete</span>
-          <h2 id="upload-success-title">{completedVideo?.status === "READY" ? "Your video is ready." : completedVideo?.status === "REJECTED" ? "Frame rejected this video." : "Processing is next."}</h2>
-          <p>{completedVideo?.status === "READY" ? "Frame has marked this video ready. You can review it in your library." : completedVideo?.status === "REJECTED" ? "The API reported this video as rejected. Check your library for the latest details before trying again." : "Your file reached Frame and completion was accepted. Processing is the next stage; check your library for the latest API status."}</p>
+          <h2 id="upload-success-title">{completedVideo?.status === "READY" ? "Your video is ready." : completedVideo?.status === "REJECTED" ? "Influence rejected this video." : "Processing is next."}</h2>
+          <p>{completedVideo?.status === "READY" ? "Influence has marked this video ready. You can review it in your library." : completedVideo?.status === "REJECTED" ? "The API reported this video as rejected. Check your library for the latest details before trying again." : "Your file reached Influence and completion was accepted. Processing is the next stage; check your library for the latest API status."}</p>
           <div className="upload-success__meta"><strong>{completedVideo?.title ?? session?.video.title ?? title}</strong>{completedVideo ? <VideoStatusBadge status={completedVideo.status} /> : <span className="field-hint">Check the library for the latest status</span>}</div>
           <div className="button-row"><Link className="button button--primary" href="/studio/videos">Go to video library <Icon name="arrow-right" /></Link><button className="button button--secondary" type="button" onClick={resetForm}>Upload another video</button></div>
         </section>
@@ -238,13 +238,13 @@ export function UploadForm() {
                 <strong>{file ? file.name : "Choose a video file"}</strong>
                 <small>{file ? `${formatBytes(file.size)} · Click to choose a different file` : "Select a file from your device"}</small>
               </label>
-              <span className="field-hint" id="video-file-hint">The API may enforce a lower configured size limit. Your file is sent directly to the upload URL provided by Frame.</span>
+              <span className="field-hint" id="video-file-hint">The API may enforce a lower configured size limit. Your file is sent directly to the upload URL provided by Influence.</span>
               {errors.file ? <span className="field-error" id="video-file-error">{errors.file}</span> : null}
             </section>
 
             <section className="panel upload-checklist">
               <h2>What happens next</h2>
-              <ol><li><span>1</span><div><strong>Secure session</strong><p>Frame creates a video record and a temporary upload URL.</p></div></li><li><span>2</span><div><strong>Direct upload</strong><p>Your file is sent to storage using the returned headers.</p></div></li><li><span>3</span><div><strong>Server processing</strong><p>Frame accepts the completed upload. Processing is the next stage reported by the API.</p></div></li></ol>
+              <ol><li><span>1</span><div><strong>Secure session</strong><p>Influence creates a video record and a temporary upload URL.</p></div></li><li><span>2</span><div><strong>Direct upload</strong><p>Your file is sent to storage using the returned headers.</p></div></li><li><span>3</span><div><strong>Server processing</strong><p>Influence accepts the completed upload. Processing is the next stage reported by the API.</p></div></li></ol>
             </section>
           </aside>
 

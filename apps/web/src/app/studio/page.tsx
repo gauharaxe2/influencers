@@ -42,7 +42,7 @@ export default async function OverviewPage() {
 
       <div className="overview-grid">
         <section className="panel account-summary">
-          <div className="panel-heading"><div><h2>{isCreator ? "Creator profile" : "Your account"}</h2><p>{isCreator ? "Your public identity and current profile status." : "The details attached to your Frame account."}</p></div><span className="badge badge--active"><span className="badge__dot" />{user.status === "ACTIVE" ? "Active" : "Suspended"}</span></div>
+          <div className="panel-heading"><div><h2>{isCreator ? "Creator profile" : "Your account"}</h2><p>{isCreator ? "Your public identity and current profile status." : "The details attached to your Influence account."}</p></div><span className="badge badge--active"><span className="badge__dot" />{user.status === "ACTIVE" ? "Active" : "Suspended"}</span></div>
           <div className="identity-row"><span className="avatar avatar--large">{getInitials(profile?.displayName ?? user.displayName)}</span><div><h3>{profile?.displayName ?? user.displayName}</h3><p>{profile ? `@${profile.handle}` : user.email}</p></div></div>
           <dl className="detail-list"><div><dt>Account type</dt><dd>{isViewer ? "Viewer" : user.role === "ADMIN" ? "Admin" : "Creator"}</dd></div><div><dt>Country</dt><dd>{user.countryCode}</dd></div><div><dt>Member since</dt><dd>{formatDate(user.createdAt)}</dd></div>{profile ? <div><dt>Profile status</dt><dd>Creator profile enabled</dd></div> : null}</dl>
           <Link className="text-link" href="/studio/profile">{isCreator ? "Edit your profile" : "View profile and account access"}<Icon name="arrow-right" width="16" height="16" /></Link>

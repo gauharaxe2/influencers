@@ -12,7 +12,7 @@ export const VIDEO_STATUSES = [
 
 export const DEFAULT_COUNTRY_CODE = "PK" as const;
 
-/** Frame launches for Pakistan first; nearby markets stay available for diaspora creators. */
+/** Influence launches for Pakistan first; nearby markets stay available for diaspora creators. */
 export const SUPPORTED_COUNTRIES = [
   { code: "PK", name: "Pakistan" },
   { code: "AE", name: "United Arab Emirates" },

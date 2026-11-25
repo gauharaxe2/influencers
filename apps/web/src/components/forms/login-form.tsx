@@ -106,10 +106,10 @@ export function LoginForm() {
       </div>
 
       <button className="button button--primary button--full" type="submit" disabled={submitting}>
-        {submitting ? <><span className="spinner" /> Logging in…</> : <>Log in to Frame <Icon name="arrow-right" /></>}
+        {submitting ? <><span className="spinner" /> Logging in…</> : <>Log in to Influence <Icon name="arrow-right" /></>}
       </button>
 
-      <p className="form-switch">New to Frame? <Link href="/signup">Create an account</Link></p>
+      <p className="form-switch">New to Influence? <Link href="/signup">Create an account</Link></p>
     </form>
   );
 }
