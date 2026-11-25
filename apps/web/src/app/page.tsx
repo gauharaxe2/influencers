@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { PoweredBy } from "@/components/powered-by";
 import { Icon, type IconName } from "@/components/icons";
 
 const creatorFeatures: { icon: IconName; title: string; description: string; detail: string }[] = [
@@ -31,7 +33,19 @@ export default function LandingPage() {
               <div className="hero__orbit hero__orbit--one" aria-hidden="true" />
               <div className="hero__orbit hero__orbit--two" aria-hidden="true" />
               <div className="creator-preview">
-                <div className="creator-preview__bar"><span className="preview-wordmark"><span className="preview-play" />Influence</span><span className="preview-label">Creator space</span><span className="preview-avatar">Y</span></div>
+                <div className="creator-preview__bar">
+                  <span className="preview-wordmark">
+                    <Image
+                      src="/brand/influence-logo.png"
+                      alt="Influence"
+                      width={220}
+                      height={72}
+                      className="preview-wordmark__logo"
+                    />
+                  </span>
+                  <span className="preview-label">Creator space</span>
+                  <span className="preview-avatar">Y</span>
+                </div>
                 <div className="creator-preview__body">
                   <div className="preview-screen">
                     <div className="preview-screen__glow" aria-hidden="true" />
@@ -52,7 +66,7 @@ export default function LandingPage() {
 
         <section className="section creator-section" id="creators">
           <div className="container">
-            <div className="section-heading section-heading--split"><div><span className="eyebrow">For creators</span><h2>Less managing.<br />More making.</h2></div><p>Influence keeps the essentials close, so your energy can stay with the story you’re telling.</p></div>
+            <div className="section-heading section-heading--split"><div><span className="eyebrow">For creators</span><h2>Less managing.<br /><span>More making.</span></h2></div><p>Influence keeps the essentials close, so your energy can stay with the story you’re telling.</p></div>
             <div className="feature-grid">
               {creatorFeatures.map((feature, index) => (
                 <article className={`feature-card feature-card--${index + 1}`} key={feature.title}>
@@ -66,7 +80,7 @@ export default function LandingPage() {
 
         <section className="section viewer-section">
           <div className="container viewer-panel">
-            <div className="viewer-panel__copy"><span className="eyebrow">For viewers</span><h2>A better place<br />to press play.</h2><p>Independent Pakistani video deserves a thoughtful home. Influence puts the creator first and keeps the viewing experience clear.</p><Link className="text-link text-link--light" href="/signup">Join as a viewer <Icon name="arrow-right" /></Link></div>
+            <div className="viewer-panel__copy"><span className="eyebrow">For viewers</span><h2>A better place<br /><span>to press play.</span></h2><p>Independent Pakistani video deserves a thoughtful home. Influence puts the creator first and keeps the viewing experience clear.</p><Link className="text-link text-link--light" href="/signup">Join as a viewer <Icon name="arrow-right" /></Link></div>
             <div className="viewer-panel__features">
               <article><span><Icon name="play" /></span><div><h3>Work with a point of view</h3><p>Make room for original videos and the people behind them.</p></div></article>
               <article><span><Icon name="eye" /></span><div><h3>Respect the creator’s choice</h3><p>Public, unlisted, and private settings keep sharing intentional.</p></div></article>
@@ -77,7 +91,7 @@ export default function LandingPage() {
 
         <section className="section revenue-section" id="revenue">
           <div className="container revenue-panel">
-            <div className="revenue-panel__copy"><span className="eyebrow">Planned revenue model</span><h2>More of the value<br />stays with the creator.</h2><p>Influence’s planned model is simple: a 30% platform share and a 70% creator share for eligible platform-supported revenue.</p><div className="revenue-panel__caveat"><Icon name="shield" /><p>This is a planned model, not a current payout guarantee. Eligible revenue, fees, markets, and payout timing will be confirmed before launch.</p></div></div>
+            <div className="revenue-panel__copy"><span className="eyebrow">Planned revenue model</span><h2>More of the value<br /><span>stays with the creator.</span></h2><p>Influence’s planned model is simple: a 30% platform share and a 70% creator share for eligible platform-supported revenue.</p><div className="revenue-panel__caveat"><Icon name="shield" /><p>This is a planned model, not a current payout guarantee. Eligible revenue, fees, markets, and payout timing will be confirmed before launch.</p></div></div>
             <div className="revenue-visual">
               <div className="revenue-visual__ring" aria-hidden="true"><div><strong>70<span>%</span></strong><small>creator share</small></div></div>
               <div className="revenue-split" role="img" aria-label="Planned revenue split: 30 percent platform and 70 percent creator"><span className="revenue-split__platform">30%</span><span className="revenue-split__creator">70%</span></div>
@@ -87,10 +101,20 @@ export default function LandingPage() {
         </section>
 
         <section className="section final-cta-section">
-          <div className="container final-cta"><div className="final-cta__mark" aria-hidden="true"><span /></div><span className="eyebrow">Your next chapter</span><h2>Give your work<br />a home of its own.</h2><p>Create an account in minutes. Start as a viewer or step into your creator studio from day one.</p><div className="hero__actions"><Link className="button button--primary button--large" href="/signup">Create your Influence account <Icon name="arrow-right" /></Link><Link className="button button--ghost button--large" href="/login">Log in</Link></div></div>
+          <div className="container final-cta"><div className="final-cta__mark" aria-hidden="true"><span /></div><span className="eyebrow">Your next chapter</span><h2>Give your work<br /><span>a home of its own.</span></h2><p>Create an account in minutes. Start as a viewer or step into your creator studio from day one.</p><div className="hero__actions"><Link className="button button--primary button--large" href="/signup">Create your Influence account <Icon name="arrow-right" /></Link><Link className="button button--ghost button--large" href="/login">Log in</Link></div></div>
         </section>
       </main>
-      <footer className="site-footer"><div className="container site-footer__inner"><span>© {new Date().getFullYear()} Influence</span><p>Independent video, thoughtfully shared.</p><nav aria-label="Footer navigation"><Link href="/login">Log in</Link><Link href="/signup">Join Influence</Link></nav></div></footer>
+      <footer className="site-footer">
+        <div className="container site-footer__inner">
+          <span>© {new Date().getFullYear()} Influence</span>
+          <p>Independent video, thoughtfully shared.</p>
+          <PoweredBy />
+          <nav aria-label="Footer navigation">
+            <Link href="/login">Log in</Link>
+            <Link href="/signup">Join Influence</Link>
+          </nav>
+        </div>
+      </footer>
     </>
   );
 }

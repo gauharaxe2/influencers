@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Brand } from "./brand";
 import { Icon } from "./icons";
+import { PoweredBy } from "./powered-by";
+import { ThemeToggle } from "./theme-toggle";
 
 export function AuthShell({
   title,
@@ -15,12 +17,17 @@ export function AuthShell({
   return (
     <main className="auth-page" id="main-content">
       <div className="auth-page__glow" aria-hidden="true" />
-      <header className="auth-nav container">
-        <Brand />
-        <Link className="text-link auth-nav__back" href="/">
-          Back to home
-          <Icon name="arrow-right" width="16" height="16" />
-        </Link>
+      <header className="auth-nav">
+        <div className="container auth-nav__inner">
+          <Brand />
+          <div className="auth-nav__actions">
+            <ThemeToggle />
+            <Link className="text-link auth-nav__back" href="/">
+              Back to home
+              <Icon name="arrow-right" width="16" height="16" />
+            </Link>
+          </div>
+        </div>
       </header>
 
       <div className="container auth-grid">
@@ -40,9 +47,12 @@ export function AuthShell({
         </section>
       </div>
 
-      <footer className="auth-footer container">
-        <span>© {new Date().getFullYear()} Influence</span>
-        <span>Independent video, thoughtfully shared.</span>
+      <footer className="auth-footer">
+        <div className="container auth-footer__inner">
+          <span>© {new Date().getFullYear()} Influence</span>
+          <span>Independent video, thoughtfully shared.</span>
+          <PoweredBy />
+        </div>
       </footer>
     </main>
   );
