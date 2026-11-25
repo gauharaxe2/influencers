@@ -255,10 +255,9 @@ export class FirestoreRepository {
   ): Promise<Session> {
     const now = new Date();
     const tokenRef = this.db.collection(COLLECTIONS.sessionTokens).doc(data.refreshTokenHash);
-    const tokenSnap = await tx.get(tokenRef);
-    if (tokenSnap.exists) {
-      throw new UniqueViolationError('refreshTokenHash');
-    }
+    // Do not read tokenRef here. Registration writes the user before creating
+    // the session, and Firestore rejects a later read in the same transaction.
+    // The hash is sha256 of a newly signed refresh token, so a collision is not practical.
 
     const session: Session = {
       id: data.id,
