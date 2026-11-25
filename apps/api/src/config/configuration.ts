@@ -125,13 +125,8 @@ const configSchema = z
             message: 'FIREBASE_SERVICE_ACCOUNT_JSON is required on Vercel',
           });
         }
-        if (config.storageDriver !== 's3') {
-          context.addIssue({
-            code: 'custom',
-            path: ['storageDriver'],
-            message: 'STORAGE_DRIVER must be s3 on Vercel',
-          });
-        }
+        // Local disk is ephemeral on Vercel; prefer S3 for durable uploads, but do not
+        // block boot — Firestore auth/data must remain available without object storage.
       }
     }
 

@@ -52,7 +52,7 @@ describe('loadConfig', () => {
     ).toThrow('FIREBASE_PROJECT_ID is required in production');
   });
 
-  it('requires a service account and object storage when Vercel runs in production', () => {
+  it('requires a Firebase service account when Vercel runs in production', () => {
     expect(() =>
       loadConfig({
         NODE_ENV: 'production',
@@ -63,10 +63,10 @@ describe('loadConfig', () => {
         PUBLIC_API_URL: 'https://api.example.com',
         WEB_ORIGIN: 'https://app.example.com',
       }),
-    ).toThrow(/FIREBASE_SERVICE_ACCOUNT_JSON is required on Vercel[\s\S]*STORAGE_DRIVER must be s3 on Vercel/);
+    ).toThrow(/FIREBASE_SERVICE_ACCOUNT_JSON is required on Vercel/);
   });
 
-  it('accepts a complete Vercel production configuration', () => {
+  it('accepts Vercel production with local storage for auth and Firestore', () => {
     const config = loadConfig({
       NODE_ENV: 'production',
       VERCEL: '1',
@@ -79,15 +79,11 @@ describe('loadConfig', () => {
       JWT_REFRESH_SECRET: 'b'.repeat(32),
       PUBLIC_API_URL: 'https://api.example.com/',
       WEB_ORIGIN: 'https://app.example.com/',
-      STORAGE_DRIVER: 's3',
-      S3_REGION: 'auto',
-      S3_BUCKET: 'frame-uploads',
-      S3_ACCESS_KEY_ID: 'key',
-      S3_SECRET_ACCESS_KEY: 'secret',
+      STORAGE_DRIVER: 'local',
     });
 
     expect(config.firebaseProjectId).toBe('frame-influencers');
-    expect(config.storageDriver).toBe('s3');
+    expect(config.storageDriver).toBe('local');
     expect(config.publicApiUrl).toBe('https://api.example.com');
     expect(config.webOrigin).toBe('https://app.example.com');
   });
