@@ -18,8 +18,7 @@ export class CreatorProfileService {
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
         const profile = await this.firestore.runTransaction(async (transaction) => {
-          await this.repository.updateUserRoleIfViewerInTransaction(transaction, user.id, 'CREATOR', 'ACTIVE');
-
+          // All reads first — Firestore forbids reads after writes in a transaction.
           const currentUser = await this.repository.getUserInTransaction(transaction, user.id);
           if (!currentUser || currentUser.status !== 'ACTIVE') {
             throw new ForbiddenException('Account is not active');
@@ -30,6 +29,14 @@ export class CreatorProfileService {
 
           const existing = await this.repository.getCreatorProfileInTransaction(transaction, user.id);
           if (existing) {
+            if (currentUser.role === 'VIEWER') {
+              await this.repository.updateUserRoleIfViewerInTransaction(
+                transaction,
+                user.id,
+                'CREATOR',
+                'ACTIVE',
+              );
+            }
             return existing;
           }
 
@@ -38,7 +45,14 @@ export class CreatorProfileService {
             this.firestore.firestore,
             currentUser.displayName,
           );
-          return this.repository.createCreatorProfileInTransaction(transaction, {
+
+          await this.repository.updateUserRoleIfViewerInTransaction(
+            transaction,
+            user.id,
+            'CREATOR',
+            'ACTIVE',
+          );
+          return this.repository.writeCreatorProfileInTransaction(transaction, {
             userId: currentUser.id,
             handle,
             displayName: currentUser.displayName,

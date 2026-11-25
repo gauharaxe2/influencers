@@ -159,7 +159,23 @@ export class FirestoreRepository {
     return snap.exists;
   }
 
-  async createUserInTransaction(
+  async assertEmailAvailableInTransaction(tx: Transaction, email: string): Promise<string> {
+    const normalized = normalizeEmail(email);
+    const emailSnap = await tx.get(this.db.collection(COLLECTIONS.userEmails).doc(normalized));
+    if (emailSnap.exists) {
+      throw new UniqueViolationError('email');
+    }
+    return normalized;
+  }
+
+  async assertHandleAvailableInTransaction(tx: Transaction, handle: string): Promise<void> {
+    const handleSnap = await tx.get(this.db.collection(COLLECTIONS.creatorHandles).doc(handle));
+    if (handleSnap.exists) {
+      throw new UniqueViolationError('handle');
+    }
+  }
+
+  writeUserInTransaction(
     tx: Transaction,
     data: {
       email: string;
@@ -168,15 +184,10 @@ export class FirestoreRepository {
       countryCode: string;
       role: Role;
     },
-  ): Promise<User> {
+  ): User {
     const now = new Date();
     const id = randomUUID();
     const normalized = normalizeEmail(data.email);
-    const emailRef = this.db.collection(COLLECTIONS.userEmails).doc(normalized);
-    const emailSnap = await tx.get(emailRef);
-    if (emailSnap.exists) {
-      throw new UniqueViolationError('email');
-    }
 
     const user: User = {
       id,
@@ -200,28 +211,33 @@ export class FirestoreRepository {
       createdAt: this.ts(now),
       updatedAt: this.ts(now),
     });
-    tx.set(emailRef, { userId: id });
+    tx.set(this.db.collection(COLLECTIONS.userEmails).doc(normalized), { userId: id });
 
     return user;
   }
 
-  async createCreatorProfileInTransaction(
+  async createUserInTransaction(
+    tx: Transaction,
+    data: {
+      email: string;
+      passwordHash: string;
+      displayName: string;
+      countryCode: string;
+      role: Role;
+    },
+  ): Promise<User> {
+    await this.assertEmailAvailableInTransaction(tx, data.email);
+    return this.writeUserInTransaction(tx, data);
+  }
+
+  writeCreatorProfileInTransaction(
     tx: Transaction,
     data: { userId: string; handle: string; displayName: string },
-  ): Promise<CreatorProfile> {
+  ): CreatorProfile {
     const now = new Date();
     const profileId = randomUUID();
     const handleRef = this.db.collection(COLLECTIONS.creatorHandles).doc(data.handle);
-    const handleSnap = await tx.get(handleRef);
-    if (handleSnap.exists) {
-      throw new UniqueViolationError('handle');
-    }
-
     const profileRef = this.db.collection(COLLECTIONS.creatorProfiles).doc(data.userId);
-    const existing = await tx.get(profileRef);
-    if (existing.exists) {
-      throw new UniqueViolationError('userId');
-    }
 
     const profile: CreatorProfile = {
       id: profileId,
@@ -249,16 +265,25 @@ export class FirestoreRepository {
     return profile;
   }
 
-  async createSessionInTransaction(
+  async createCreatorProfileInTransaction(
+    tx: Transaction,
+    data: { userId: string; handle: string; displayName: string },
+  ): Promise<CreatorProfile> {
+    await this.assertHandleAvailableInTransaction(tx, data.handle);
+    const profileRef = this.db.collection(COLLECTIONS.creatorProfiles).doc(data.userId);
+    const existing = await tx.get(profileRef);
+    if (existing.exists) {
+      throw new UniqueViolationError('userId');
+    }
+    return this.writeCreatorProfileInTransaction(tx, data);
+  }
+
+  createSessionInTransaction(
     tx: Transaction,
     data: { id: string; userId: string; refreshTokenHash: string; expiresAt: Date },
-  ): Promise<Session> {
+  ): Session {
     const now = new Date();
     const tokenRef = this.db.collection(COLLECTIONS.sessionTokens).doc(data.refreshTokenHash);
-    const tokenSnap = await tx.get(tokenRef);
-    if (tokenSnap.exists) {
-      throw new UniqueViolationError('refreshTokenHash');
-    }
 
     const session: Session = {
       id: data.id,

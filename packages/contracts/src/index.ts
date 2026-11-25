@@ -10,26 +10,34 @@ export const VIDEO_STATUSES = [
   "REJECTED",
 ] as const;
 
+export const DEFAULT_COUNTRY_CODE = "PK" as const;
+
+/** Frame launches for Pakistan first; nearby markets stay available for diaspora creators. */
 export const SUPPORTED_COUNTRIES = [
+  { code: "PK", name: "Pakistan" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "SA", name: "Saudi Arabia" },
+  { code: "GB", name: "United Kingdom" },
   { code: "US", name: "United States" },
   { code: "CA", name: "Canada" },
-  { code: "GB", name: "United Kingdom" },
-  { code: "DE", name: "Germany" },
-  { code: "FR", name: "France" },
-  { code: "NL", name: "Netherlands" },
   { code: "IN", name: "India" },
   { code: "AU", name: "Australia" },
-  { code: "NZ", name: "New Zealand" },
-  { code: "SG", name: "Singapore" },
-  { code: "JP", name: "Japan" },
-  { code: "BR", name: "Brazil" },
+  { code: "QA", name: "Qatar" },
+  { code: "KW", name: "Kuwait" },
+  { code: "OM", name: "Oman" },
+  { code: "BH", name: "Bahrain" },
 ] as const;
 
 export const registerSchema = z.object({
   email: z.string().trim().email().max(254).transform((value) => value.toLowerCase()),
   password: z.string().min(10).max(128),
   displayName: z.string().trim().min(2).max(60),
-  countryCode: z.string().trim().regex(/^[A-Z]{2}$/).transform((value) => value.toUpperCase()),
+  countryCode: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{2}$/)
+    .transform((value) => value.toUpperCase())
+    .default(DEFAULT_COUNTRY_CODE),
   accountType: z.enum(ACCOUNT_TYPES),
 });
 

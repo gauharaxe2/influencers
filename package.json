@@ -12,6 +12,10 @@
     "test": "npm run build --workspace @creator-platform/contracts && npm run test --workspace @creator-platform/api && npm run test --workspace @creator-platform/web",
     "db:seed": "npm run db:seed --workspace @creator-platform/api"
   },
+  "allowScripts": {
+    "@firebase/util": true,
+    "protobufjs": true
+  },
   "devDependencies": {
     "concurrently": "^9.2.1",
     "tsx": "^4.20.6",

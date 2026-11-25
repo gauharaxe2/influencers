@@ -17,9 +17,9 @@ export default function LandingPage() {
           <div className="hero__grid-bg" aria-hidden="true" />
           <div className="container hero__grid">
             <div className="hero__copy">
-              <span className="eyebrow hero__eyebrow"><span className="status-dot" /> A new frame for independent video</span>
+              <span className="eyebrow hero__eyebrow"><span className="status-dot" /> Built for Pakistan’s independent video</span>
               <h1>Your work.<br /><span>Your frame.</span></h1>
-              <p className="hero__lead">A focused home for creators to publish with purpose—and viewers to find work worth pressing play on.</p>
+              <p className="hero__lead">A focused home for Pakistani creators to publish with purpose—and viewers at home and abroad to find work worth pressing play on.</p>
               <div className="hero__actions">
                 <Link className="button button--primary button--large" href="/signup">Start creating <Icon name="arrow-right" /></Link>
                 <Link className="button button--ghost button--large" href="/login">I already have an account</Link>
@@ -66,7 +66,7 @@ export default function LandingPage() {
 
         <section className="section viewer-section">
           <div className="container viewer-panel">
-            <div className="viewer-panel__copy"><span className="eyebrow">For viewers</span><h2>A better place<br />to press play.</h2><p>Independent video deserves a thoughtful home. Frame puts the creator first and keeps the viewing experience clear.</p><Link className="text-link text-link--light" href="/signup">Join as a viewer <Icon name="arrow-right" /></Link></div>
+            <div className="viewer-panel__copy"><span className="eyebrow">For viewers</span><h2>A better place<br />to press play.</h2><p>Independent Pakistani video deserves a thoughtful home. Frame puts the creator first and keeps the viewing experience clear.</p><Link className="text-link text-link--light" href="/signup">Join as a viewer <Icon name="arrow-right" /></Link></div>
             <div className="viewer-panel__features">
               <article><span><Icon name="play" /></span><div><h3>Work with a point of view</h3><p>Make room for original videos and the people behind them.</p></div></article>
               <article><span><Icon name="eye" /></span><div><h3>Respect the creator’s choice</h3><p>Public, unlisted, and private settings keep sharing intentional.</p></div></article>

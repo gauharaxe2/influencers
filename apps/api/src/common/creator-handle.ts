@@ -7,11 +7,16 @@ export async function allocateCreatorHandle(
   db: FirebaseFirestore.Firestore,
   displayName: string,
 ): Promise<string> {
-  const preferredHandle = generateHandle(displayName);
-  const handleRef = db.collection(COLLECTIONS.creatorHandles).doc(preferredHandle);
-  const existing = await transaction.get(handleRef);
+  const taken = new Set<string>();
 
-  return existing.exists
-    ? generateHandle(displayName, new Set([preferredHandle]))
-    : preferredHandle;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const candidate = generateHandle(displayName, taken);
+    const existing = await transaction.get(db.collection(COLLECTIONS.creatorHandles).doc(candidate));
+    if (!existing.exists) {
+      return candidate;
+    }
+    taken.add(candidate);
+  }
+
+  return generateHandle(displayName, taken);
 }

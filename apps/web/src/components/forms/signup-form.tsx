@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ACCOUNT_TYPES,
+  DEFAULT_COUNTRY_CODE,
   SUPPORTED_COUNTRIES,
   registerSchema,
   type AuthDto,
@@ -22,7 +23,7 @@ export function SignupForm() {
     displayName: "",
     email: "",
     password: "",
-    countryCode: SUPPORTED_COUNTRIES[0]?.code ?? "US",
+    countryCode: DEFAULT_COUNTRY_CODE,
     accountType: "VIEWER",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -78,7 +79,7 @@ export function SignupForm() {
         <span className="form-heading__icon"><Icon name="spark" /></span>
         <div>
           <h2>Create your account</h2>
-          <p>One account. Watch, create, and make it yours.</p>
+          <p>Built for creators and viewers in Pakistan—watch, publish, and grow from home.</p>
         </div>
       </div>
 

@@ -19,3 +19,5 @@ coverage/
 
 .secrets/
 apps/api/.secrets/
+.vercel
+.env*

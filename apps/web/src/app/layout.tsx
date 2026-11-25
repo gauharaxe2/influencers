@@ -5,10 +5,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   applicationName: "Frame",
   title: {
-    default: "Frame — Your work, in your frame",
+    default: "Frame Pakistan — Your work, in your frame",
     template: "%s · Frame",
   },
-  description: "A focused home for independent video creators and the people who watch them.",
+  description:
+    "A focused home for independent video creators in Pakistan—and the people who watch them.",
 };
 
 export const viewport: Viewport = {

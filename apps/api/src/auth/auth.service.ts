@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, UnauthorizedException } from '@n
 import { JwtService } from '@nestjs/jwt';
 import type { AuthDto, LoginInput, RegisterInput } from '@creator-platform/contracts';
 import type { Transaction } from 'firebase-admin/firestore';
-import { argon2id, hash, verify } from 'argon2';
+import { compare, hash } from 'bcryptjs';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
@@ -23,6 +23,8 @@ import {
   REFRESH_TOKEN_TTL_SECONDS,
 } from '../security/security.constants';
 
+const BCRYPT_ROUNDS = 12;
+
 interface RefreshTokenPayload {
   sub: string;
   sid: string;
@@ -41,17 +43,20 @@ export class AuthService {
 
   async register(input: RegisterInput): Promise<AuthDto> {
     await this.countryPolicies.requireSignup(input.countryCode);
-    const passwordHash = await hash(input.password, { type: argon2id });
+    const passwordHash = await hash(input.password, BCRYPT_ROUNDS);
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
         return await this.firestore.runTransaction(async (transaction) => {
+          // Firestore requires every read before any write in a transaction.
+          await this.repository.assertEmailAvailableInTransaction(transaction, input.email);
+
           const handle =
             input.accountType === 'CREATOR'
               ? await allocateCreatorHandle(transaction, this.firestore.firestore, input.displayName)
               : null;
 
-          const user = await this.repository.createUserInTransaction(transaction, {
+          const user = this.repository.writeUserInTransaction(transaction, {
             email: input.email,
             passwordHash,
             displayName: input.displayName,
@@ -60,7 +65,7 @@ export class AuthService {
           });
 
           if (handle) {
-            await this.repository.createCreatorProfileInTransaction(transaction, {
+            this.repository.writeCreatorProfileInTransaction(transaction, {
               userId: user.id,
               handle,
               displayName: input.displayName,
@@ -87,11 +92,11 @@ export class AuthService {
     const user = await this.repository.findUserByEmail(input.email);
 
     if (!user) {
-      await hash(randomBytes(32).toString('hex'), { type: argon2id });
+      await hash(randomBytes(32).toString('hex'), BCRYPT_ROUNDS);
       throw this.invalidCredentials();
     }
 
-    const passwordMatches = await verify(user.passwordHash, input.password).catch(() => false);
+    const passwordMatches = await compare(input.password, user.passwordHash).catch(() => false);
 
     if (!passwordMatches || user.status !== 'ACTIVE') {
       throw this.invalidCredentials();
@@ -185,7 +190,7 @@ export class AuthService {
       },
     );
 
-    await this.repository.createSessionInTransaction(transaction, {
+    this.repository.createSessionInTransaction(transaction, {
       id: sessionId,
       userId: user.id,
       refreshTokenHash: sha256(refreshToken),

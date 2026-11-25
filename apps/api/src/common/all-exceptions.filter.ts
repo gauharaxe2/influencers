@@ -21,13 +21,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       return;
     }
 
+    const detail =
+      exception instanceof Error
+        ? `${exception.name}: ${exception.message}`
+        : String(exception);
     this.logger.error(
-      'Unhandled API request error',
-      process.env.NODE_ENV === 'production'
-        ? undefined
-        : exception instanceof Error
-          ? exception.stack
-          : String(exception),
+      `Unhandled API request error: ${detail}`,
+      exception instanceof Error ? exception.stack : undefined,
     );
     response.status(500).json({
       statusCode: 500,

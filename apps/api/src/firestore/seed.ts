@@ -10,7 +10,7 @@ const policyDefaults = {
   creatorUploadsEnabled: true,
   adsEnabled: false,
   payoutsEnabled: false,
-  dataRegion: 'global',
+  dataRegion: 'asia-south1',
 };
 
 async function main(): Promise<void> {
@@ -22,7 +22,18 @@ async function main(): Promise<void> {
 
   const policies = [
     { id: 'GLOBAL', ...policyDefaults },
-    ...SUPPORTED_COUNTRIES.map(({ code }) => ({ id: code, ...policyDefaults })),
+    {
+      id: 'PK',
+      signupEnabled: true,
+      creatorUploadsEnabled: true,
+      adsEnabled: false,
+      payoutsEnabled: false,
+      dataRegion: 'asia-south1',
+    },
+    ...SUPPORTED_COUNTRIES.filter(({ code }) => code !== 'PK').map(({ code }) => ({
+      id: code,
+      ...policyDefaults,
+    })),
   ];
 
   const batch = db.batch();
