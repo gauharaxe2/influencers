@@ -5,6 +5,30 @@ import type { Firestore, Transaction } from 'firebase-admin/firestore';
 import { APP_CONFIG } from '../config/configuration';
 import type { AppConfig } from '../config/configuration';
 
+export function initializeFirebaseAdmin(config: {
+  firebaseProjectId: string;
+  firebaseServiceAccountJson?: string;
+}): void {
+  if (!process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()) {
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  }
+
+  if (admin.apps.length) {
+    return;
+  }
+
+  const projectId = config.firebaseProjectId;
+  if (config.firebaseServiceAccountJson) {
+    const credential = admin.credential.cert(
+      JSON.parse(config.firebaseServiceAccountJson) as admin.ServiceAccount,
+    );
+    admin.initializeApp({ credential, projectId });
+    return;
+  }
+
+  admin.initializeApp({ projectId });
+}
+
 @Injectable()
 export class FirestoreService implements OnModuleInit {
   private db!: Firestore;
@@ -12,17 +36,7 @@ export class FirestoreService implements OnModuleInit {
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
 
   onModuleInit(): void {
-    if (!admin.apps.length) {
-      const projectId = this.config.firebaseProjectId;
-      if (this.config.firebaseServiceAccountJson) {
-        const credential = admin.credential.cert(
-          JSON.parse(this.config.firebaseServiceAccountJson) as admin.ServiceAccount,
-        );
-        admin.initializeApp({ credential, projectId });
-      } else {
-        admin.initializeApp({ projectId });
-      }
-    }
+    initializeFirebaseAdmin(this.config);
     this.db = admin.firestore();
   }
 

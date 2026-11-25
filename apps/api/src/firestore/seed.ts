@@ -3,7 +3,7 @@ import { SUPPORTED_COUNTRIES } from '@creator-platform/contracts';
 import * as admin from 'firebase-admin';
 import { loadConfig } from '../config/configuration';
 import { COLLECTIONS } from './collections';
-import { FirestoreService } from './firestore.service';
+import { FirestoreService, initializeFirebaseAdmin } from './firestore.service';
 
 const policyDefaults = {
   signupEnabled: true,
@@ -15,19 +15,7 @@ const policyDefaults = {
 
 async function main(): Promise<void> {
   const config = loadConfig(process.env);
-
-  if (!admin.apps.length) {
-    if (config.firebaseServiceAccountJson) {
-      admin.initializeApp({
-        credential: admin.credential.cert(
-          JSON.parse(config.firebaseServiceAccountJson) as admin.ServiceAccount,
-        ),
-        projectId: config.firebaseProjectId,
-      });
-    } else {
-      admin.initializeApp({ projectId: config.firebaseProjectId });
-    }
-  }
+  initializeFirebaseAdmin(config);
 
   const db = admin.firestore();
   const now = FirestoreService.timestampFromDate(new Date());
