@@ -1,6 +1,51 @@
 rules_version = '2';
+
+// The API uses the Firebase Admin SDK, which bypasses these rules.
+// No browser or mobile client is given a Firebase config. Every collection
+// below holds private account data (password hashes, session tokens, or
+// upload tokens), so client access stays closed.
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /users/{document} {
+      allow read, write: if false;
+    }
+
+    match /userEmails/{document} {
+      allow read, write: if false;
+    }
+
+    match /sessions/{document} {
+      allow read, write: if false;
+    }
+
+    match /sessionTokens/{document} {
+      allow read, write: if false;
+    }
+
+    match /creatorProfiles/{document} {
+      allow read, write: if false;
+    }
+
+    match /creatorHandles/{document} {
+      allow read, write: if false;
+    }
+
+    match /countryPolicies/{document} {
+      allow read, write: if false;
+    }
+
+    match /videos/{document} {
+      allow read, write: if false;
+    }
+
+    match /uploadSessions/{document} {
+      allow read, write: if false;
+    }
+
+    match /uploadTokens/{document} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

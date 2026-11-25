@@ -4,12 +4,14 @@ export const APP_CONFIG = Symbol('APP_CONFIG');
 
 const DEVELOPMENT_ACCESS_SECRET = 'development-only-creator-platform-access-secret';
 const DEVELOPMENT_REFRESH_SECRET = 'development-only-creator-platform-refresh-secret';
+const DEVELOPMENT_FIREBASE_PROJECT_ID = 'frame-influencers';
 
 const configSchema = z
   .object({
     nodeEnv: z.enum(['development', 'test', 'production']).default('development'),
     port: z.coerce.number().int().min(1).max(65535).default(4000),
-    firebaseProjectId: z.string().min(1).default('frame-influencers'),
+    runningOnVercel: z.boolean().default(false),
+    firebaseProjectId: z.string().min(1).optional(),
     firebaseServiceAccountJson: z.string().min(1).optional(),
     jwtAccessSecret: z.string().min(1).optional(),
     jwtRefreshSecret: z.string().min(1).optional(),
@@ -42,7 +44,36 @@ const configSchema = z
       });
     }
 
+    if (config.firebaseServiceAccountJson) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(config.firebaseServiceAccountJson);
+      } catch {
+        parsed = null;
+      }
+      const account = parsed as { client_email?: unknown; private_key?: unknown } | null;
+      if (
+        !account ||
+        typeof account.client_email !== 'string' ||
+        typeof account.private_key !== 'string'
+      ) {
+        context.addIssue({
+          code: 'custom',
+          path: ['firebaseServiceAccountJson'],
+          message:
+            'FIREBASE_SERVICE_ACCOUNT_JSON must be a service account JSON object with client_email and private_key',
+        });
+      }
+    }
+
     if (config.nodeEnv === 'production') {
+      if (!config.firebaseProjectId) {
+        context.addIssue({
+          code: 'custom',
+          path: ['firebaseProjectId'],
+          message: 'FIREBASE_PROJECT_ID is required in production',
+        });
+      }
       if (!config.publicApiUrl) {
         context.addIssue({
           code: 'custom',
@@ -85,6 +116,23 @@ const configSchema = z
           message: 'JWT_REFRESH_SECRET must contain at least 32 characters in production',
         });
       }
+
+      if (config.runningOnVercel) {
+        if (!config.firebaseServiceAccountJson) {
+          context.addIssue({
+            code: 'custom',
+            path: ['firebaseServiceAccountJson'],
+            message: 'FIREBASE_SERVICE_ACCOUNT_JSON is required on Vercel',
+          });
+        }
+        if (config.storageDriver !== 's3') {
+          context.addIssue({
+            code: 'custom',
+            path: ['storageDriver'],
+            message: 'STORAGE_DRIVER must be s3 on Vercel',
+          });
+        }
+      }
     }
 
     if (config.storageDriver === 's3') {
@@ -106,8 +154,9 @@ const configSchema = z
       }
     }
   })
-  .transform((config) => ({
+  .transform(({ runningOnVercel: _runningOnVercel, ...config }) => ({
     ...config,
+    firebaseProjectId: config.firebaseProjectId ?? DEVELOPMENT_FIREBASE_PROJECT_ID,
     jwtAccessSecret: config.jwtAccessSecret ?? DEVELOPMENT_ACCESS_SECRET,
     jwtRefreshSecret: config.jwtRefreshSecret ?? DEVELOPMENT_REFRESH_SECRET,
     publicApiUrl: config.publicApiUrl ?? 'http://localhost:4000',
@@ -123,27 +172,37 @@ export class ConfigurationError extends Error {
   }
 }
 
+function readEnv(environment: NodeJS.ProcessEnv, name: string): string | undefined {
+  const value = environment[name];
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+}
+
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): AppConfig {
-  const useS3 = environment.STORAGE_DRIVER === 's3';
+  const useS3 = readEnv(environment, 'STORAGE_DRIVER') === 's3';
   const result = configSchema.safeParse({
-    nodeEnv: environment.NODE_ENV,
-    port: environment.PORT,
-    firebaseProjectId: environment.FIREBASE_PROJECT_ID,
-    firebaseServiceAccountJson: environment.FIREBASE_SERVICE_ACCOUNT_JSON,
-    jwtAccessSecret: environment.JWT_ACCESS_SECRET,
-    jwtRefreshSecret: environment.JWT_REFRESH_SECRET,
-    storageDriver: environment.STORAGE_DRIVER,
-    localStorageDir: environment.LOCAL_STORAGE_DIR,
-    maxUploadBytes: environment.MAX_UPLOAD_BYTES,
-    publicApiUrl: environment.PUBLIC_API_URL,
-    webOrigin: environment.WEB_ORIGIN,
-    s3Endpoint: useS3 ? environment.S3_ENDPOINT || undefined : undefined,
-    s3Region: useS3 ? environment.S3_REGION || undefined : undefined,
-    s3Bucket: useS3 ? environment.S3_BUCKET || undefined : undefined,
-    s3AccessKeyId: useS3 ? environment.S3_ACCESS_KEY_ID || undefined : undefined,
-    s3SecretAccessKey: useS3 ? environment.S3_SECRET_ACCESS_KEY || undefined : undefined,
-    s3SessionToken: useS3 ? environment.S3_SESSION_TOKEN || undefined : undefined,
-    s3ForcePathStyle: useS3 ? environment.S3_FORCE_PATH_STYLE : undefined,
+    nodeEnv: readEnv(environment, 'NODE_ENV'),
+    port: readEnv(environment, 'PORT'),
+    runningOnVercel: environment.VERCEL === '1',
+    firebaseProjectId: readEnv(environment, 'FIREBASE_PROJECT_ID'),
+    firebaseServiceAccountJson: readEnv(environment, 'FIREBASE_SERVICE_ACCOUNT_JSON'),
+    jwtAccessSecret: readEnv(environment, 'JWT_ACCESS_SECRET'),
+    jwtRefreshSecret: readEnv(environment, 'JWT_REFRESH_SECRET'),
+    storageDriver: readEnv(environment, 'STORAGE_DRIVER'),
+    localStorageDir: readEnv(environment, 'LOCAL_STORAGE_DIR'),
+    maxUploadBytes: readEnv(environment, 'MAX_UPLOAD_BYTES'),
+    publicApiUrl: readEnv(environment, 'PUBLIC_API_URL'),
+    webOrigin: readEnv(environment, 'WEB_ORIGIN'),
+    s3Endpoint: useS3 ? readEnv(environment, 'S3_ENDPOINT') : undefined,
+    s3Region: useS3 ? readEnv(environment, 'S3_REGION') : undefined,
+    s3Bucket: useS3 ? readEnv(environment, 'S3_BUCKET') : undefined,
+    s3AccessKeyId: useS3 ? readEnv(environment, 'S3_ACCESS_KEY_ID') : undefined,
+    s3SecretAccessKey: useS3 ? readEnv(environment, 'S3_SECRET_ACCESS_KEY') : undefined,
+    s3SessionToken: useS3 ? readEnv(environment, 'S3_SESSION_TOKEN') : undefined,
+    s3ForcePathStyle: useS3 ? readEnv(environment, 'S3_FORCE_PATH_STYLE') : undefined,
   });
 
   if (!result.success) {

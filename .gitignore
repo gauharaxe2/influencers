@@ -6,6 +6,10 @@ dist/
 .secrets/
 apps/api/.secrets/
 .vercel
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
 .env*
 !.env.example
 !**/.env.example
